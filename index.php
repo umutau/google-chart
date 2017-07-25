@@ -20,6 +20,12 @@ foreach ($persons as $keyPerson => $person) {
         $value[$keyPerson][$keyMonth] = rand(10, 100);
     }
 }
+//get the selected personel list
+if(isset($_POST['selectedPersonelList'])){
+    $selectedPersonel=$_POST['selectedPersonelList'];
+}else{
+    $selectedPersonel=['0','1','2'];
+}
 ?>
 <html lang="en">
     <head>
@@ -71,6 +77,16 @@ foreach ($persons as $keyPerson => $person) {
                         }
                         ?>
                     </table>
+                    <br/><br/>
+                    <h5>Display Persons</h5>
+                    <form name="frmPersonelList" id="frmPersonelList" method="post">
+                        <?php
+                        foreach ($persons as $personKey => $person) {
+                            echo '<label class="checkbox-inline"><input type="checkbox" name="selectedPersonelList[]" value="' . $personKey . '" '.(array_search(strval($personKey),$selectedPersonel)===false?'':'checked=true').'>' . $person . '</label>';
+                        }
+                        ?>
+                        <button type="button" class="btn btn-primary" id="btnCreateMessage" onClick="javascript:updateChart();">Refresh Chart</button>
+                    </form>
                 </div>
                 <div class="col-lg-12 text-center" id="columnchart_values" style="width: 900px; height: 300px;"></div>
 
@@ -83,43 +99,59 @@ foreach ($persons as $keyPerson => $person) {
         <script src="bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script type="text/javascript">
-            google.charts.load("current", {packages: ['bar']});
-            google.charts.setOnLoadCallback(drawChart);
-            function drawChart() {
-                var data = google.visualization.arrayToDataTable([
-                <?php
-                echo "['Month'";
-                foreach ($persons as $person) {
-                    echo ",'$person'";
-                }
-                echo "]";
-                $sum=[];
-                foreach ($months as $monthKey => $month) {
-                    echo ",['$month'";
-                    foreach ($persons as $personKey => $person) {
-                        echo "," . $value[$personKey][$monthKey];
-                        if(!isset($sum[$personKey]))
-                            $sum[$personKey]=0;
-                        $sum[$personKey]+=$value[$personKey][$monthKey];
-                    }
-                    
-                    echo "]";
-                }
-                echo ",['Average'";
-                foreach ($persons as $personKey => $person) {
-                    echo "," . round($sum[$personKey]/12);
-                }
-                echo "]";
-                ?>
-                ]);
-                var options = {
-                    title: "Google Chart Examples with Random Numbers",
-                    width: 1200,
-                    height: 400,
-                };
-                var chart = new google.charts.Bar(document.getElementById("columnchart_values"));
-                chart.draw(data, google.charts.Bar.convertOptions(options));
-            }
+                        google.charts.load("current", {packages: ['bar']});
+                        google.charts.setOnLoadCallback(drawChart);
+                        function drawChart() {
+                            var data = google.visualization.arrayToDataTable([
+<?php
+echo "['Month'";
+foreach ($selectedPersonel as $person) {
+    echo ",'$persons[$person]'";
+}
+echo "]";
+$sum = [];
+foreach ($months as $monthKey => $month) {
+    echo ",['$month'";
+    foreach ($selectedPersonel as $person) {
+        echo "," . $value[$person][$monthKey];
+        if (!isset($sum[$person]))
+            $sum[$person] = 0;
+        $sum[$person] += $value[$person][$monthKey];
+    }
+
+    echo "]";
+}
+echo ",['Average'";
+foreach ($selectedPersonel as $person) {
+    echo "," . round($sum[$person] / 12);
+}
+echo "]";
+?>
+                            ]);
+                            var options = {
+                                title: "Google Chart Examples with Random Numbers",
+                                width: 1200,
+                                height: 400,
+                            };
+                            var chart = new google.charts.Bar(document.getElementById("columnchart_values"));
+                            chart.draw(data, google.charts.Bar.convertOptions(options));
+                        }
+                        function updateChart() {
+                            var checkboxs = $('[name="selectedPersonelList[]"]');
+                            var okay = false;
+                            for (var i = 0, l = checkboxs.length; i < l; i++)
+                            {
+                                if (checkboxs[i].checked)
+                                {
+                                    okay = true;
+                                    break;
+                                }
+                            }
+                            if (!okay)
+                                alert("Please select a personel");
+                            else
+                                $('#frmPersonelList').submit();
+                        }
         </script>
     </body>
 </html>
